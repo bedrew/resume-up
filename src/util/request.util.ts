@@ -1,21 +1,30 @@
+import { timeoutCall } from "./shared.util"
+
 interface Params {
     headers: HeadersInit
     body?: BodyInit
+    timeoutMs?: number
 }
 
 const defaultParams: Params = {
     headers: { 'Content-Type': 'application/json' },
 }
 
+type RequestConfig = {
+    basePath: string, 
+    params?: { requestTimeoutMs?: number }
+}
+
 export abstract class Request {
 
-    public basePath = ''
     protected request = fetch
 
-    public constructor({ basePath }: {basePath?: string}) {
-        if(basePath) {
-            this.basePath = basePath
-        }
+    public config: RequestConfig = {
+        basePath: '',
+    }
+
+    public constructor(config: RequestConfig) {
+        this.config = config
     }
 
     protected abstract baseParams(params: Params): { 
@@ -43,11 +52,27 @@ export abstract class Request {
     }
 
     public json<T>(url: string, params: Params = defaultParams) {
-        return this.jsonRequest<T>(`${this.basePath}/${url}`, params)
+        const timeoutMs = params.timeoutMs || this.config.params?.requestTimeoutMs
+        if(timeoutMs) {
+            return timeoutCall<{ response: Response; result: T; }>({
+                callback: this.jsonRequest.bind(this, `${this.config.basePath}/${url}`, params),
+                timeoutMs,
+                errorMessage: url + ' timed out after ' + timeoutMs + ' ms'
+            })    
+        }
+        return this.jsonRequest<T>(`${this.config.basePath}/${url}`, params)
     }
 
     public text(url: string, params: Params = defaultParams) {
-        return this.textRequest(`${this.basePath}/${url}`, params)
+        const timeoutMs = params.timeoutMs || this.config.params?.requestTimeoutMs
+        if(timeoutMs) {
+            return timeoutCall<{ response: Response; result: string; }>({
+                callback: this.textRequest.bind(this, `${this.config.basePath}/${url}`, params),
+                timeoutMs,
+                errorMessage: url + ' timed out after ' + timeoutMs + 'ms'
+            })    
+        }
+        return this.textRequest(`${this.config.basePath}/${url}`, params)
     }
     
 }
@@ -68,7 +93,7 @@ export class POST extends Request {
     }
 }
 
-export const createRequestInstance = (config: {basePath: string}) => {
+export const createRequestInstance = (config: RequestConfig) => {
     const result = {}
     for (const oneMember of [GET, POST]) {
         const instance = new oneMember(config)

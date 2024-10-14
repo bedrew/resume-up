@@ -5,14 +5,14 @@ import { DataSource } from 'typeorm'
 import { DataEntity } from 'src/data/entity/data.entity'
 import { createRequestInstance } from 'src/util/request.util'
 import { TelegramController } from './telegram.controller'
-import { HeadHunterModule } from 'src/headhunter/headhunter.module'
+import { HeadHunterUserModule } from 'src/headhunter-user/headhunter-user.module'
 import { UserEntity } from 'src/user/entity/user.entity'
-import { HeadHunterUserEntity } from 'src/headhunter/entity/headhunter-user.entity'
+import { HeadHunterUserEntity } from 'src/headhunter-user/entity/headhunter-user.entity'
 
 @Module({
     controllers: [TelegramController],
     exports: [TelegramService],
-    imports: [HeadHunterModule],
+    imports: [HeadHunterUserModule],
     providers: [
         {
             useFactory: (datasource: DataSource) => {

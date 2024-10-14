@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { UserEntity } from './entity/user.entity'
-import { HeadHunterService } from 'src/headhunter/headhunter.service'
+import { HeadHunterUserService } from 'src/headhunter-user/headhunter-user.service'
 import { time } from 'src/util/shared.util'
 import { TelegramService } from 'src/telegram/telegram.service'
 
@@ -11,7 +11,7 @@ export class UserService {
 
     public constructor(
         @InjectRepository(UserEntity) private userEntityRepository: Repository<UserEntity>,
-        private readonly headHunterService: HeadHunterService,
+        private readonly headHunterUserService: HeadHunterUserService,
         private readonly telegramService: TelegramService,
     ) {}
 
@@ -19,8 +19,12 @@ export class UserService {
         return this.userEntityRepository.findBy({ removed: false })
     }
 
+    public removeUser(user: UserEntity) {
+        return this.userEntityRepository.update({ id: user.id },{ removed: true })
+    }
+
     public async createUser(code: string, telergamChatId: number) {
-        const headhunterUser = await this.headHunterService.createUser(code, telergamChatId)
+        const headhunterUser = await this.headHunterUserService.createUser(code, telergamChatId)
         let user = await this.userEntityRepository.findOneBy({
             headHunterUserId: headhunterUser.id, telegramChatId: Number(telergamChatId)
         })

@@ -1,3 +1,4 @@
+import { time } from 'src/util/shared.util'
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
 
 @Entity({ name: 'user' })
@@ -14,6 +15,9 @@ export class UserEntity {
 
     @Column('integer', { name: 'ts_create' })
     public tsCreate!: number
+
+    @Column('integer', { name: 'ts_update' })
+    public tsUpdate = time()
 
     @Column('boolean')
     public removed = false

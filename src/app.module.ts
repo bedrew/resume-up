@@ -1,20 +1,21 @@
 import { Module } from '@nestjs/common'
-import { HeadHunterModule } from './headhunter/headhunter.module'
+import { HeadHunterUserModule } from './headhunter-user/headhunter-user.module'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { TelegramModule } from './telegram/telegram.module'
 import { UserModule } from './user/user.module'
-import { HeadHunterResumeUpdateJob } from './headhunter/job/headhunter-resume-update.job'
+import { HeadHunterResumeUpdateJob } from './headhunter-user/job/headhunter-resume-update.job'
+import { BaseConfig, getConfig } from './app.config'
 
 @Module({
     imports: [
-        HeadHunterModule,
+        HeadHunterUserModule,
         TelegramModule,
         UserModule,
         TypeOrmModule.forRoot({
             type: 'sqlite',
             database: 'app.db',
             entities: [__dirname + '/**/entity/*.js'],
-            synchronize: true,
+            synchronize: getConfig(BaseConfig).syncDatabase,
         }),
     ],
     controllers: [],

@@ -16,7 +16,7 @@ export class HeadHunterUserEntity {
     public refreshToken!: string
 
     @Column('integer', { name: 'ts_access_token_expire' })
-    public tsAccessTokenExprire!: number
+    public tsAccessTokenExpire!: number
 
     @Column('boolean')
     public removed = false

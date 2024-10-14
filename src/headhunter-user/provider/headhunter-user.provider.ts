@@ -1,16 +1,16 @@
 import qs from 'qs'
 import { HeadHunterConfig } from "src/app.config" 
 import { createRequestInstance } from "src/util/request.util"
-import { Applicant, Resume, TokenUpdateResult } from '../headhunter.types'
+import { Applicant, Resume, TokenUpdateResult } from '../headhunter-user.types'
 import { HeadHunterUserEntity } from '../entity/headhunter-user.entity'
   
 
 export class HeadHunterUserProvider {
 
     public constructor(
-        protected config: HeadHunterConfig,
-        protected request: ReturnType<typeof createRequestInstance>,
-        protected headhunterUser?: HeadHunterUserEntity
+        private config: HeadHunterConfig,
+        private request: ReturnType<typeof createRequestInstance>,
+        private headhunterUser?: HeadHunterUserEntity
     ) {}
 
     public createToken(code: string, telergamChatId: number) {
@@ -30,14 +30,12 @@ export class HeadHunterUserProvider {
     }
     
     public updateResumePublishDate(resumeId: string, token?: string) {
-        return this.request.post.json<Resume>('resumes/' + resumeId + '/publish', {
+        return this.request.post.text('resumes/' + resumeId + '/publish', {
             headers: {
                 'HH-User-Agent': this.config.userAgent,
-                'Authorization': `Bearer ${token || this.headhunterUser.accessToken}`,
+                'Authorization': `Bearer ${token || this.headhunterUser?.accessToken}`,
                 'Content-Type': 'application/json',
             },
-        }).then(r => { 
-            return r.result
         })
     }
 
@@ -59,7 +57,7 @@ export class HeadHunterUserProvider {
         return this.request.get.json<Resume>('resumes/mine?per_page=50', {
             headers: {
                 'HH-User-Agent': this.config.userAgent,
-                'Authorization': `Bearer ${token || this.headhunterUser.accessToken}`,
+                'Authorization': `Bearer ${token || this.headhunterUser?.accessToken}`,
                 'Content-Type': 'application/json',
             },
         }).then(r => {
@@ -71,11 +69,10 @@ export class HeadHunterUserProvider {
         return this.request.get.json<Applicant>('me', {
             headers: {
                 'HH-User-Agent': this.config.userAgent,
-                'Authorization': `Bearer ${token || this.headhunterUser.accessToken}`,
+                'Authorization': `Bearer ${token || this.headhunterUser?.accessToken}`,
                 'Content-Type': 'application/json',
             },
         }).then(r => {
-            console.log(r)
             return r.result
         })
     }

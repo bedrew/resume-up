@@ -1,19 +1,17 @@
 import { sleep, timeoutCall } from "../util/shared.util"
-import { Logger, LoggerService } from '@nestjs/common'
+import { Logger } from '@nestjs/common'
 
 type Args = { 
     timeoutMs: number,
     sleepMs: number, 
-    logger: LoggerService
 }
 
 export function IntervalExecution(
-    { timeoutMs, sleepMs, logger }: Args = { 
-        timeoutMs: 0, sleepMs: 1000, logger: new Logger('IntervalExecution')
-    }
+    { timeoutMs, sleepMs }: Args = {  timeoutMs: 0, sleepMs: 1000 }
 ): MethodDecorator {
-    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    return function (target: any, _: string | symbol, descriptor: PropertyDescriptor) {
         const originalMethod = descriptor.value
+        const logger = new Logger('IntervalExecution')
         descriptor.value = async function (...args: any[]) {
             logger.log(target.constructor.name + ':' + originalMethod.name + ' initialized')
             while (true) {

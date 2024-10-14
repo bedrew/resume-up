@@ -3,18 +3,19 @@
 type AppConfig = {}
 
 export class HeadHunterConfig implements AppConfig {
-    readonly redirectUrl: string
-    readonly clientId: string
-    readonly clientSecret: string
-    readonly userAgent: string
+    readonly redirectUrl!: string 
+    readonly clientId!: string 
+    readonly clientSecret!: string 
+    readonly userAgent!: string
 }
 
 export class TelegramConfig implements AppConfig {
-    readonly botToken: string
+    readonly botToken!: string 
 }
 
 export class BaseConfig implements AppConfig {
-    readonly port: number
+    readonly port!: number
+    readonly syncDatabase!: boolean
 }
 
 export interface Config {
@@ -26,6 +27,7 @@ export interface Config {
 const appConfig: Config = {
     baseConfig: {
         port: 3000,
+        syncDatabase: true,
     },
     headHunterConfig: {
         redirectUrl: 'http://localhost:3000/user/auth',

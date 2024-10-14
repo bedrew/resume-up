@@ -5,10 +5,10 @@ export class CreateUserDto {
 
     @IsNumber()
     @IsNotEmpty()
-    @Transform(({value}) =>  Number(value))
-    public chatId: number
+    @Transform(({ value }) => Number(value))
+    public chatId!: number
 
     @IsNotEmpty()
-    public code: string
+    public code!: string
 
 }

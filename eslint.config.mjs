@@ -38,7 +38,7 @@ export default [
 
             parserOptions: {
                 project: 'tsconfig.json',
-                tsconfigRootDir: '/home/bedrew/Documents/Projects/hh/head-hunter',
+                tsconfigRootDir: __dirname,
             },
         },
 

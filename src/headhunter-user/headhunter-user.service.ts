@@ -6,14 +6,16 @@ import { HeadHunterUserEntity } from "./entity/headhunter-user.entity"
 import { Repository } from "typeorm"
 import { createRequestInstance } from "src/util/request.util"
 import { HeadHunterUserProvider } from './provider/headhunter-user.provider'
+import { time } from 'src/util/shared.util'
   
 @Injectable()
-export class HeadHunterService {
+export class HeadHunterUserService {
 
     public constructor(
-        protected config: HeadHunterConfig,
-        protected request: ReturnType<typeof createRequestInstance>,
-        @InjectRepository(HeadHunterUserEntity) private headhunterUserEntity: Repository<HeadHunterUserEntity>,
+        private config: HeadHunterConfig,
+        private request: ReturnType<typeof createRequestInstance>,
+        @InjectRepository(HeadHunterUserEntity) 
+            private headhunterUserEntityRepository: Repository<HeadHunterUserEntity>,
     ) {}
 
     public getAuthLink(chatId: number) {
@@ -25,7 +27,11 @@ export class HeadHunterService {
     }
 
     public async getUser(userId: number) {
-        return this.headhunterUserEntity.findOneBy({ removed: false, id: userId })
+        return this.headhunterUserEntityRepository.findOneBy({ removed: false, id: userId })
+    }
+
+    public async removeUser(user: HeadHunterUserEntity) {
+        return this.headhunterUserEntityRepository.update({ id: user.id },{ removed: true })
     }
 
     public async createUser(code: string, telergamChatId: number) {
@@ -38,18 +44,18 @@ export class HeadHunterService {
             throw new Error('Invalid auth type')
         }
 
-        let user = await this.headhunterUserEntity.findOneBy({ externalId: Number(tokenInfo.id) })
+        let user = await this.headhunterUserEntityRepository.findOneBy({ externalId: Number(tokenInfo.id) })
 
         if(!user) {
-            user = this.headhunterUserEntity.create({
+            user = this.headhunterUserEntityRepository.create({
                 accessToken: result.access_token,
                 refreshToken: result.refresh_token,
-                tsAccessTokenExprire: Math.round(Date.now() / 1000 + Number(result.expires_in)),
+                tsAccessTokenExpire: Math.round(Date.now() / 1000 + Number(result.expires_in)),
                 externalId: Number(tokenInfo.id),
             })
         }
 
-        return this.headhunterUserEntity.save({ ...user, removed: false })
+        return this.headhunterUserEntityRepository.save({ ...user, removed: false })
     }
 
     private createProvider(user?: HeadHunterUserEntity) {
@@ -60,8 +66,24 @@ export class HeadHunterService {
         return this.createProvider(user).updateResumePublishDate(resumeId)
     }
 
+    public async updateToken(user: HeadHunterUserEntity) {
+        const provider = this.createProvider(user)
+        if((time() - user.tsAccessTokenExpire) > 0) {
+            const {expires_in, access_token, refresh_token} =  await provider.refreshToken(user.refreshToken)
+            return this.headhunterUserEntityRepository.save({
+                ...user, ...{
+                    tsAccessTokenExpire: Math.round(Date.now() / 1000 + Number(expires_in)),
+                    accessToken: access_token,
+                    refreshToken: refresh_token,
+                }
+            })
+        }
+        return user
+    }
+
     public getPublisedUserResume(user: HeadHunterUserEntity) {
-        return this.createProvider(user).getResume().then(r=> r.items.filter(i => i.can_publish_or_update === true))
+        return this.createProvider(user).getResume()
+            .then(r => r.items.filter(item => item.status.id === "published"))
     }
 
 }

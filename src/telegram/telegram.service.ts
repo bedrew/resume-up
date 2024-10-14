@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common'
-import { TelegramConfig } from 'src/app.config'
 import { DataEntity, DataEntityKeys } from 'src/data/entity/data.entity'
-import { HeadHunterUserEntity } from 'src/headhunter/entity/headhunter-user.entity'
+import { HeadHunterUserEntity } from 'src/headhunter-user/entity/headhunter-user.entity'
 import { UserEntity } from 'src/user/entity/user.entity'
 import { createRequestInstance } from 'src/util/request.util'
 import { timeoutCall } from 'src/util/shared.util'
 import { Repository } from 'typeorm'
-
 
 export interface TelegramEntry {
     update_id: number
@@ -29,9 +27,14 @@ export interface TelegramCommand {
     chatId: number;
     command: {
         text: string;
-        type: string;
+        description: string;
     };
 }
+
+const TELEGRAM_COMMAND = [
+    { command: 'start', description: 'Авторизация' },
+    { command: 'menu', description: 'Меню' },
+]
 
 @Injectable()
 export class TelegramService {
@@ -47,6 +50,9 @@ export class TelegramService {
         const user = await this.userEntityRepository.findOneBy({ 
             telegramChatId: chatId, removed: false
         })
+        if(!user) {
+            return { user: null, headhunterUser: null }
+        }
         const headhunterUser = await this.headhunterUserEntityRepository.findOneBy({ 
             id: user.headHunterUserId, removed: false 
         })
@@ -81,25 +87,27 @@ export class TelegramService {
     }
 
     public async getCommands(): Promise<TelegramCommand[]> {
-        const commands = [
-            { text: "/start", type: 'login' },
-            { text: "/menu", type: 'menu' }
-        ]
         return this.getUpdates().then(update => {
-            const result: { chatId: number, command: { text: string, type: string } }[] = []
+            const result: { chatId: number, command: {text: string, description: string} }[] = []
             for (const oneUpdate of update) {
-                if(!oneUpdate.message || !oneUpdate.message.chat) {
+                const message = oneUpdate.message
+                if(!message|| !message.chat) {
                     continue
                 } 
-                if(oneUpdate.message.chat.type !== 'private') {
+                if(message.chat.type !== 'private') {
+                    continue
+                }
+                const updateCommand = TELEGRAM_COMMAND
+                    .find(item => '/' + item.command === message.text)
+                if(!updateCommand) {
                     continue
                 }
                 result.push({
-                    chatId: oneUpdate.message.chat.id,
-                    command: commands.find(item => item.text === oneUpdate.message.text) 
+                    chatId: message.chat.id,
+                    command: { text: updateCommand.command, description: updateCommand.description }
                 })
             }
-            return result.filter(item => item.command)
+            return result
         })
     }
 
@@ -109,6 +117,10 @@ export class TelegramService {
             text: text,
             parse_mode: 'html',
         })
+    }
+
+    public setCommands() {
+        return this.query('setMyCommands', { commands: TELEGRAM_COMMAND })
     }
 
     public async query<T>(url: string, params: any = {}) {
