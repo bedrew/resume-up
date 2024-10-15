@@ -36,7 +36,7 @@ export class HeadHunterResumeUpdateJob {
             await this.userService.removeUser(oneUser)
             return
         }
-        if((time() - oneUser.tsUpdate) > 5 * 60 * 15) {
+        if((time() - oneUser.tsUpdate) > 60 * 60 * 24) {
             await this.userService.removeUser(oneUser)
             await this.headHunterUserService.removeUser(headhunterUser)
             this.telegramService.sendMessage(oneUser.telegramChatId, new TelegramMessage([
@@ -49,10 +49,12 @@ export class HeadHunterResumeUpdateJob {
         const resume = await this.headHunterUserService.getPublisedUserResume(headhunterUser)
         for (const oneResume of resume.filter(item => item.can_publish_or_update === true)) {
             try {
-                await this.headHunterUserService.updateResumePublishDate(headhunterUser, oneResume.id)
-                this.telegramService.sendMessage(oneUser.telegramChatId, new TelegramMessage([
-                    `Резюме ${oneResume.title} было обновленно`,
-                ]).create()) 
+                const result = await this.headHunterUserService.updateResumePublishDate(headhunterUser, oneResume.id)
+                if(result.response.status === 204) {
+                    this.telegramService.sendMessage(oneUser.telegramChatId, new TelegramMessage([
+                        `Резюме ${oneResume.title} было обновленно`,
+                    ]).create()) 
+                }
             } catch (error) {
                 console.log(error)
             }
