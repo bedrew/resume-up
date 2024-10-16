@@ -59,6 +59,7 @@ export class HeadHunterResumeUpdateJob {
                 console.log(error)
             }
         }
+        await this.userService.setLastUpdate(oneUser)
     }
    
 }

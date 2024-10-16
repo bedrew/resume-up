@@ -15,6 +15,10 @@ export class UserService {
         private readonly telegramService: TelegramService,
     ) {}
 
+    public setLastUpdate(user: UserEntity) {
+        return this.userEntityRepository.update({ id: user.id }, { tsUpdate: time() })
+    }
+
     public getAllUser() {
         return this.userEntityRepository.findBy({ removed: false })
     }
