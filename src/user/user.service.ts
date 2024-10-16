@@ -39,7 +39,7 @@ export class UserService {
                 tsCreate: time()
             }) 
         }
-        await this.userEntityRepository.save({ ...user, removed: false })
+        await this.userEntityRepository.save({ ...user, removed: false, tsUpdate: time() })
         this.telegramService.sendMessage(
             telergamChatId, ['Вы успешно авторизовались.', 'Для продолжения нажмите /menu'].join('\n')
         )
